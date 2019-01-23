@@ -616,165 +616,10 @@ logpURregions <- ur_test_log_p %>%
 
 
 #--------------------------------------------------------------------------------------------
-# 4. VAR analysis 
+# 5. SVAR 
 #--------------------------------------------------------------------------------------------
 
-Var.data <- left_join(delta_e,
-                      log_e) %>% 
-  left_join(log_p) %>% 
-  dplyr::select(-quarter1) %>% 
-  dplyr::select(Date,
-                reg1,
-                everything())
-
-
-# Test on Adeliade
-
-Adelaide <- list()
-datamat <- Var.data %>% 
-  filter(reg1 == "Adelaide") %>% 
-  ungroup() %>% 
-  dplyr::select(-Date,-reg1)
-
-datamat <-  data.frame(cbind(as.matrix(datamat),xts::lag.xts(as.matrix(datamat),k = 1),xts::lag.xts(as.matrix(datamat),k = 2)))
-
-datamat <-  datamat[complete.cases(datamat),]
-  
-Adelaide[["delta_e"]] <- lm(delta_e ~ delta_e.1+log_e.1+log_p.1++delta_e.2+
-                            log_e.2+log_p.2, data = datamat)
-
-Adelaide[["log_e"]] <- lm(log_e ~ delta_e +delta_e.1+log_e.1+log_p.1++delta_e.2+
-                            log_e.2+log_p.2, data = datamat)
-
-Adelaide[["log_p"]] <- lm(log_p ~ delta_e+ delta_e.1+log_e.1+log_p.1++delta_e.2+
-                            log_e.2+log_p.2, data = datamat)
-
-
-# USE PSI function from VARS
-nstep <- 10
-nstep <- abs(as.integer(nstep))
-K <- 3  #x$K
-p <-  2 #x$p
-
-
-# Creating B matrix 
-y.names <- colnames(datamat[, c(1:K)])
-Z <- datamat[, -c(1:K)]
-B <- matrix(0, nrow = K, ncol = ncol(Z)+2)
-
-B[1,1] <- 0
-B[1,2:7] <- coef(Adelaide[[1]])[-c(1)]
-B[1,8] <- coef(Adelaide[[1]])[1]
-
-for (i in 2:K) {
-    B[i,1:7] <- coef(Adelaide[[i]])[-1]
-    
-    B[i,8] <-coef(Adelaide[[i]])[1] 
-
-      }
-
-colnames(B)[-1] <- c("delta_e",colnames(Z))
-rownames(B) <- y.names
-
-# Creating A matrix 
-y.names <- colnames(datamat[, c(1:K)])
-Z <- datamat[, -c(1:K)]
-B <- matrix(0, nrow = K, ncol = ncol(Z)+2)
-
-B[1,1] <- 0
-B[1,2:7] <- coef(Adelaide[[1]])[-c(1)]
-B[1,8] <- coef(Adelaide[[1]])[1]
-
-for (i in 2:K) {
-  B[i,1:7] <- coef(Adelaide[[i]])[-1]
-  
-  B[i,8] <-coef(Adelaide[[i]])[1] 
-  
-}
-
-colnames(B) <- c("delta_e",colnames(Z), "const")
-rownames(B) <- y.names
-
-# Creating A matrix (for Wold MA decomposition)
-
-A <- B[,2:7]
-As <- list()
-start <- seq(1,p*K,K)
-end <- seq(K, p*K,K)
-
-As[[1]] <- matrix(c(B[,1],0,0,0,0,0,0), ncol = 3, byrow = F)
-rownames(As[[1]]) <- row.names(A)
-colnames(As[[1]]) <- row.names(A)
-for(i in 1:p){
-  
-  As[[i+1]] <- matrix(A[,start[i]:end[i]], nrow = K, ncol = K)
-  rownames(As[[i+1]]) <- row.names(A)
-  colnames(As[[i+1]]) <- colnames(A[,start[i]:end[i]] )
-}
-
-# Creating PHI matrix
-nstep <- 10
-nstep <- abs(as.integer(nstep))
-K <- 3  #x$K
-p <-  3 #x$p
-A <- as.array(As)
-
-if(nstep >= p){
-  As <- array(0, dim = c(K, K, nstep + 1))
-  for(i in (p + 1):(nstep + 1)){
-    As[, , i] <- matrix(0, nrow = K, ncol = K)
-  }
-} else {
-  As <- array(0, dim = c(K, K, p))
-}
-for(i in 1:p){
-  As[, , i] <- A[[i]]
-}
-Phi <- array(0, dim=c(K, K, nstep + 1))
-Phi[, ,1] <- diag(K)
-Phi[, , 2] <- Phi[, , 1] %*% As[, , 1]
-if (nstep > 1) {
-  for (i in 3:(nstep + 1)) {
-    tmp1 <- Phi[, , 1] %*% As[, , i-1]
-    tmp2 <- matrix(0, nrow = K, ncol = K)
-    idx <- (i - 2):1
-    for (j in 1:(i - 2)) {
-      tmp2 <- tmp2 + Phi[, , j+1] %*% As[, , idx[j]]
-    }
-    Phi[, , i] <- tmp1 + tmp2
-  }
-}
-
-
-Psi <- array(0, dim=dim(Phi))
-params <- ncol(datamat[, -c(1:K+1)])
-sigma.u <- crossprod(cbind(resid(Adelaide$delta_e),resid(Adelaide$log_e),resid(Adelaide$log_p))) / (75 - params)
-P <- t(chol(sigma.u))
-dim3 <- dim(Phi)[3]
-for(i in 1:dim3){
-  Psi[, , i] <- Phi[, , i] %*% P
-  
-}
-
-irf <- Psi
-impulse <-y.names
-response <- y.names
-
-dimnames(irf) <- list(y.names, y.names, NULL)
-idx <- length(impulse)
-irs <- list()
-n.ahead <-  10
-
-for(i in 1 : idx){
-  irs[[i]] <- matrix(t(irf[response , impulse[i], 1 : (n.ahead + 1)]), nrow = n.ahead+1)
-  colnames(irs[[i]]) <- response
-  
-}
-
-names(irs) <- impulse
-#--------------------------------------------------------------------------------------------
-# 5. Old way 
-#--------------------------------------------------------------------------------------------
+Bmat <- matrix(c(NA,0,0,NA,NA,0,NA,0,NA),ncol = 3, byrow = TRUE)
 
 Varlist <- list()
 for(i in seq_along(unique(Var.data$reg1))){
@@ -829,8 +674,11 @@ for(i in seq_along(unique(Var.data$reg1))){
      
   }
   
-  Varlist[[paste(unique(Var.data$reg1)[i])]][["irf"]]$data <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% irf(n.ahead = 20)
+  Varlist[[paste(unique(Var.data$reg1)[i])]][["irf chol"]]$data <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% irf(n.ahead = 20)
   
+  Varlist[[paste(unique(Var.data$reg1)[i])]][["svar"]]<- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% SVAR(Bmat = Bmat)
+  
+  Varlist[[paste(unique(Var.data$reg1)[i])]][["svar irf"]]$data <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% SVAR(Bmat = Bmat) %>% irf(n.ahead = 20)
   
   
 }
