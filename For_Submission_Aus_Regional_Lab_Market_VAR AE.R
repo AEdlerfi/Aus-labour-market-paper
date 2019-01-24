@@ -683,6 +683,47 @@ for(i in seq_along(unique(Var.data$reg1))){
   
 }
 
+growby <- function(x, y, b = TRUE){
+  
+  for(i in seq(1:21)){  
+  
+  if(b == TRUE){
+    
+        
+      x[i+1] <- x[i]*(1.02)
+      
+    }else{
+      
+      x[i+1] <- x[i]*(1.02+y[i])
+      
+      }
+    }
+  return(x)
+  }
 
+index.fun <- function(y){
+  
+  x <- rep(100,21)
+  
+  for(i in seq(1:21)){
+    
+    x[i+1]= x[i]*y[i+1]
+    
+  }
+  return(x)
+}
+
+data.frame(Emp = index.fun(y =(growby(x = rep(100,21), y = -1*Varlist$Adelaide$`svar irf`$data$irf$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE))),
+
+           Ur = c(0,100*(0+Varlist$Adelaide$`svar irf`$data$irf$delta_e[,2])),
+           Part = c(0,100*(0-Varlist$Adelaide$`svar irf`$data$irf$delta_e[,3])),
+            h = seq(0:21)) %>% 
+  gather(Var, Value, -h) %>% 
+  ggplot(aes(x = h))+
+           geom_line(aes(y = Value, colour = Var))+ 
+  facet_wrap(~Var, scales = "free")
+
+
+           
 
 ############ WE DID IT!!!!!!!!!!!!!!!!! ###########################
