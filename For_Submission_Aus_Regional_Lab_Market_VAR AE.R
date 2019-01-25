@@ -727,20 +727,54 @@ for(i in regions){
   
   chartdata[[paste("Emp",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
   
+  chartdata[[paste("Emp H",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
+  
+  chartdata[[paste("Emp L",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
+  
+  
   chartdata[[paste("Ur",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,2]))
   
+  chartdata[[paste("Ur H",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,2]))
+  
+  chartdata[[paste("Ur L",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,2]))
+  
+  
   chartdata[[paste("Part",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,3]))
+  
+  chartdata[[paste("Part H",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,3]))
+  
+  chartdata[[paste("Part L",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,3]))
   
 }
 
 chartdata %>% 
   bind_rows() %>%
   mutate(h = 0:21) %>% 
-gather(Var, Value, -h) %>% 
+  gather(Var, Value, -h) %>% 
+  filter(!grepl("Emp H|Emp L|Ur H|Ur L|Part H|Part L",.$Var)) %>% 
+  left_join(chartdata %>% 
+              bind_rows() %>%
+              mutate(h = 0:21) %>% 
+              gather(Var, Value, -h) %>% 
+              filter(grepl("Emp H|Ur H|Part H",.$Var)) %>%
+              mutate(Var = gsub(" H","",.$Var)) %>% 
+              rename(Plus95 = Value )
+                        ) %>% 
+  left_join(chartdata %>% 
+              bind_rows() %>%
+              mutate(h = 0:21) %>% 
+              gather(Var, Value, -h) %>% 
+              filter(grepl("Emp L|Ur L|Part L",.$Var)) %>%
+              mutate(Var = gsub(" L","",.$Var)) %>% 
+              rename(Less95 = Value)
+            
+  ) %>% 
+  
   ggplot(aes(x = h))+
-  geom_line(aes(y = Value))+ 
-  facet_wrap(~Var, scales = "free")
-
+  facet_wrap(~Var, scales = "free")+
+  geom_line(aes(y = Value), colour = "red")+
+  geom_ribbon(aes(ymin = Less95, ymax = Plus95, group = Var), alpha = 0.2)+
+  theme_classic()
   
   
   
