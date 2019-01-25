@@ -392,7 +392,7 @@ ur_test_delta_e <- delta_e_ur %>%
                                    "reject H0",
                                    "do not reject H0"))
 
-URregions <- ur_test_delta_e %>% 
+delta_e_URregions <- ur_test_delta_e %>% 
   filter(reg1 %in% c("Adelaide","Townsville" ,"Mandurah","West and North West" ))
   
 # Chart 4.b log_e 
@@ -683,6 +683,12 @@ for(i in seq_along(unique(Var.data$reg1))){
   
 }
 
+
+#--------------------------------------------------------------------------------------------
+# 5. IRFs for charts 
+#--------------------------------------------------------------------------------------------
+
+
 growby <- function(x, y, b = TRUE){
   
   for(i in seq(1:21)){  
@@ -713,17 +719,31 @@ index.fun <- function(y){
   return(x)
 }
 
-data.frame(Emp = index.fun(y =(growby(x = rep(100,21), y = -1*Varlist$Adelaide$`svar irf`$data$irf$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE))),
+regions <- c("Adelaide","Cairns" ,"Mandurah","West and North West" )
+RegionsVar <- Varlist[regions] 
 
-           Ur = c(0,100*(0+Varlist$Adelaide$`svar irf`$data$irf$delta_e[,2])),
-           Part = c(0,100*(0-Varlist$Adelaide$`svar irf`$data$irf$delta_e[,3])),
-            h = seq(0:21)) %>% 
-  gather(Var, Value, -h) %>% 
+chartdata <- list()
+for(i in regions){
+  
+  chartdata[[paste("Emp",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
+  
+  chartdata[[paste("Ur",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,2]))
+  
+  chartdata[[paste("Part",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,3]))
+  
+}
+
+chartdata %>% 
+  bind_rows() %>%
+  mutate(h = 0:21) %>% 
+gather(Var, Value, -h) %>% 
   ggplot(aes(x = h))+
-           geom_line(aes(y = Value, colour = Var))+ 
+  geom_line(aes(y = Value))+ 
   facet_wrap(~Var, scales = "free")
 
-
+  
+  
+  
            
 
 ############ WE DID IT!!!!!!!!!!!!!!!!! ###########################
