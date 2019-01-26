@@ -4,7 +4,7 @@
 
 # This code provides the charts and figures supporting our paper:
 # "Projections of regional labour market adjustment Australia from a vector autogression model"
-# Rebecca Colquhoun & Cedric Hodges
+# Rebecca Colquhoun & Cedric Hodges & Adam Elderfield
 
 #--------------------------------------------------------------------------------------------
 # Contents
@@ -61,7 +61,7 @@ LabData  <- LabData %>%
   mutate(date1 = seq(ymd("1998/10/01"), ymd("2018/03/01"), by = "month")) %>%
   rename(reg1 = "SA4 region") %>%
   rename(var1 = "Labour Force Variable") %>%
-  rename(val1 = "emp")
+  rename(val1 = "emp") 
 
 AgData  <- AgData %>%
   rename(reg1 = "SA4 (UR)")
@@ -683,6 +683,12 @@ for(i in seq_along(unique(Var.data$reg1))){
   
 }
 
+# Subset for the regions we care about
+
+regions <- c("Adelaide","Cairns" ,"Mandurah","West and North West" )
+RegionsVar <- Varlist[regions] 
+
+
 
 #--------------------------------------------------------------------------------------------
 # 5. IRFs for charts 
@@ -718,9 +724,6 @@ index.fun <- function(y){
   }
   return(x)
 }
-
-regions <- c("Adelaide","Cairns" ,"Mandurah","West and North West" )
-RegionsVar <- Varlist[regions] 
 
 chartdata <- list()
 for(i in regions){
@@ -758,6 +761,7 @@ chartdata %>%
               gather(Var, Value, -h) %>% 
               filter(grepl("Emp H|Ur H|Part H",.$Var)) %>%
               mutate(Var = gsub(" H","",.$Var)) %>% 
+              mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>% 
               rename(Plus95 = Value )
                         ) %>% 
   left_join(chartdata %>% 
@@ -766,6 +770,7 @@ chartdata %>%
               gather(Var, Value, -h) %>% 
               filter(grepl("Emp L|Ur L|Part L",.$Var)) %>%
               mutate(Var = gsub(" L","",.$Var)) %>% 
+              mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>%
               rename(Less95 = Value)
             
   ) %>% 
