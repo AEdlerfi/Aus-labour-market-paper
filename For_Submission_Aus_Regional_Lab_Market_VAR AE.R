@@ -321,6 +321,7 @@ delta_e <- LabData %>%
   filter(var1 == "Employed Total ('000)") %>%
   rename(quarter1 = "quarter(date1, with_year = TRUE)") %>%
   summarise(val2 = mean(val1)) %>%
+  group_by(reg1) %>% 
   mutate(val2 = log(val2) - log(lag(val2))) %>%
   ungroup() %>%
   mutate(AU = rep(filter(., reg1 == "Australia")$val2, 57)) %>%
@@ -405,6 +406,7 @@ LabData %>%
   filter(var1 == "log_e") %>%
   rename(quarter1 = "quarter(date1, with_year = TRUE)") %>%
   summarise(val2 = mean(val1)) %>%
+  group_by(reg1) %>% 
   ungroup() %>%
   mutate(AU = rep(filter(., reg1 == "Australia")$val2, 57)) %>%
   filter(reg1 %in% c("Adelaide","Townsville" ,"Mandurah","West and North West" )) %>% 
@@ -428,6 +430,7 @@ log_e <-
   filter(var1 == "log_e") %>%
   rename(quarter1 = "quarter(date1, with_year = TRUE)") %>%
   summarise(val2 = mean(val1)) %>%
+  group_by(reg1) %>%  
   ungroup() %>%
   mutate(AU = rep(filter(., reg1 == "Australia")$val2, 57)) %>%
   mutate(log_e = log(val2 / AU)) %>%
@@ -541,6 +544,7 @@ log_p <-  LabData %>%
   filter(var1 == "prate") %>%
   rename(quarter1 = "quarter(date1, with_year = TRUE)") %>% 
   summarise(val2 = mean(val1))%>%
+  group_by(reg1)  %>% 
   ungroup() %>%
   mutate(AU = rep(filter(., reg1 == "Australia")$val2, 57)) %>%
   mutate(log_p = log(val2 / AU)) %>%
@@ -619,7 +623,17 @@ logpURregions <- ur_test_log_p %>%
 # 5. SVAR 
 #--------------------------------------------------------------------------------------------
 
+Var.data <- left_join(delta_e,
+                      log_e) %>% 
+  left_join(log_p) %>% 
+  dplyr::select(-quarter1) %>% 
+  dplyr::select(Date,
+                reg1,
+                everything())
+
+
 Bmat <- matrix(c(NA,0,0,NA,NA,0,NA,0,NA),ncol = 3, byrow = TRUE)
+
 
 Varlist <- list()
 for(i in seq_along(unique(Var.data$reg1))){
@@ -650,9 +664,8 @@ for(i in seq_along(unique(Var.data$reg1))){
     ts(f =4)
   
   Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] <- VAR(dat,
-                                                          type = "const",
-                                                          lag.max = 8,
-                                                          ic = "AIC")
+                                                          type = "const", lag.max = 8, ic = "AIC"
+                                                          )
   
   Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$summary <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% summary()  
   
@@ -685,9 +698,8 @@ for(i in seq_along(unique(Var.data$reg1))){
 
 # Subset for the regions we care about
 
-regions <- c("Adelaide","Cairns" ,"Mandurah","West and North West" )
+regions <- c("Adelaide","Perth" ,"Mandurah","West and North West" )
 RegionsVar <- Varlist[regions] 
-
 
 
 #--------------------------------------------------------------------------------------------
