@@ -696,10 +696,83 @@ for(i in seq_along(unique(Var.data$reg1))){
   
 }
 
-# Subset for the regions we care about
+#--------------------------------------------------------------------------------------------
+# 6. Deep dive into selected regions 
+#--------------------------------------------------------------------------------------------
 
 regions <- c("Adelaide","Perth" ,"Mandurah","West and North West" )
 RegionsVar <- Varlist[regions] 
+
+## Adelaide
+
+# Filter data from VARdata
+
+Adelaide.data <- Var.data %>% 
+  filter(reg1 == "Adelaide")
+
+Adelaide.data %>% 
+  dplyr::select(Date, log_p) %>%  
+  ggplot(aes(Date, log_p)) + 
+  geom_line()
+
+# Removing mean from adelaide lop_p
+
+Adelaide.data$log_p_dm <- residuals(lm(Adelaide.data$log_p~1))
+
+Adelaide.data %>% 
+  ungroup() %>% 
+  dplyr::select(-log_p, -reg1) %>%
+  gather(Var, Val, -Date) %>% 
+  ggplot(aes(Date)) + 
+  geom_line(aes(y = Val,colour = Var))
+
+# Estiamte var
+
+Adelaide.var <- VAR(Adelaide.data[,c("delta_e","log_e","log_p_dm")],lag.max = 8,ic = "AIC",
+                    type = "none")
+
+# AIC favours 2 lags, dynamic responses don't change dramatically when including more.
+
+# AC test, BG for small number of lags PT for large
+
+Adelaide.var %>% 
+  serial.test(lags.pt = 16, type = "PT.adjusted")
+
+Adelaide.var %>% 
+  serial.test(lags.bg = 4, type = "ES")
+
+# Normality:
+# Univariate residuals are fine
+# Mulitvariate residuals are not normal, however small sample the test is oversized (Killian and Lutkepohl 2017) there are small sample corrections but are not implemented in the VARS package
+
+Adelaide.var %>% 
+  normality.test(multivariate.only = FALSE)
+
+# ARCH
+
+Adelaide.var %>% 
+  arch.test(lags.multi = 4, multivariate.only = FALSE)
+
+# stability
+
+Adelaide.var %>% 
+  stability(type = "OLS-CUSUM") %>% 
+  plot()
+
+# Recursive residuals for delta_e move outside the CI, but probably nothing to worry too much about. Possibly include a dummy variable?
+Adelaide.var %>% 
+  stability(type = "Rec-CUSUM") %>% 
+  plot()
+
+Adelaide.svar <-  SVAR(Adelaide.var, Bmat = Bmat)
+
+Adelaide.svar$B/Adelaide.svar$Bse
+
+RegionsVar$Adelaide$VAR <- Adelaide.var
+
+RegionsVar$Adelaide$svar <- Adelaide.svar
+
+RegionsVar$Adelaide$`svar irf`$data <- Adelaide.svar %>% irf(n.ahead = 20)
 
 
 #--------------------------------------------------------------------------------------------
