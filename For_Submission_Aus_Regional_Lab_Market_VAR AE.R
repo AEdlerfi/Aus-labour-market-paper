@@ -349,7 +349,7 @@ delta_e_ur <- lapply(delta_e %>%
                            
                            KPSS = x %>% 
                              ts(start = c(1999,1), f =4) %>% 
-                             ur.kpss(type ="mu",lags = "short")
+                             ur.kpss(type ="mu",use.lag = 4)
                            )
      
     
@@ -458,7 +458,7 @@ log_e_ur <- lapply(log_e %>%
                            
                            KPSS = x %>% 
                              ts(start = c(1999,1), f =4) %>% 
-                             ur.kpss(type ="mu",lags = "short")
+                             ur.kpss(type ="mu",use.lag = 4)
                          )
                          
                          
@@ -571,7 +571,7 @@ log_p_ur <- lapply(log_p %>%
                            
                            KPSS = x %>% 
                              ts(start = c(1999,1), f =4) %>% 
-                             ur.kpss(type ="mu",lags = "short")
+                             ur.kpss(type ="mu", use.lag = 4)
                          )
                          
                          
@@ -773,6 +773,21 @@ RegionsVar$Adelaide$VAR <- Adelaide.var
 RegionsVar$Adelaide$svar <- Adelaide.svar
 
 RegionsVar$Adelaide$`svar irf`$data <- Adelaide.svar %>% irf(n.ahead = 20)
+
+#--------------------------------------------------------------------------------------------
+# 5. Table for appendix 
+#--------------------------------------------------------------------------------------------
+
+URDiags <- ur_test_delta_e %>%
+  mutate(Variable = "delta e") %>% 
+  bind_rows(ur_test_log_e %>% 
+              mutate(Variable = "log e")) %>% 
+  bind_rows(ur_test_log_p %>% 
+              mutate(Variable = "log p")) %>% 
+    filter(reg1 %in% regions) %>% 
+  rename(Region = reg1) %>% 
+  dplyr::select(Region, Variable, test, `test stat`, `critical value 5%`)
+
 
 
 #--------------------------------------------------------------------------------------------
