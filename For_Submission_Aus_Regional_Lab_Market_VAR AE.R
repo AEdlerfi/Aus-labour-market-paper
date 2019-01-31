@@ -865,6 +865,87 @@ RegionsVar$Townsville$svar <- Townsville.svar
 RegionsVar$Townsville$`svar irf`$data <- Townsville.svar %>% irf(n.ahead = 20)
 
 
+## Mandurah
+
+# Filter data from VARdata
+
+Mandurah.data <- Var.data %>% 
+  filter(reg1 == "Mandurah")
+
+Mandurah.data %>% 
+  dplyr::select(Date, delta_e) %>%  
+  ggplot(aes(Date, delta_e)) + 
+  geom_line()
+
+# Remove outlier in  in delta_e
+
+Mandurah.data$delta_e_adj <- tsoutliers::tso(ts(Mandurah.data$delta_e, f = 4))$yadj
+
+Mandurah.data$log_e_adj <- tsoutliers::tso(ts(Mandurah.data$log_e, f = 4))$yadj
+
+
+
+Mandurah.data$log_p_dm <- residuals(lm(Mandurah.data$log_p~1))
+
+
+Mandurah.data %>% 
+  ungroup() %>% 
+  dplyr::select( -reg1) %>%
+  gather(Var, Val, -Date) %>% 
+  ggplot(aes(Date)) + 
+  geom_line(aes(y = Val,colour = Var))
+
+# Estiamte var
+
+Mandurah.var <- VAR(Mandurah.data[,c("delta_e_adj","log_e_adj","log_p_dm")], lag.max = 8, ic = "AIC", type ="none" )
+
+Mandurah.var <- VAR(Mandurah.data[,c("delta_e_adj","log_e_adj","log_p_dm")], p =4, type ="none")
+
+
+# AIC favours 5 lags, dynamic responses don't change dramatically when including more.
+
+# AC test, BG for small number of lags PT for large
+
+Mandurah.var %>% 
+  serial.test(lags.pt = 12, type = "PT.adjusted")
+
+Mandurah.var %>% 
+  serial.test(lags.bg = 8, type = "ES")
+
+# Normality:
+# Univariate - log_e could be an issue - likely an outlier
+# Mulitvariate residuals are not normal, however small sample the test is oversized (Killian and Lutkepohl 2017) there are small sample corrections but are not implemented in the VARS package
+
+Mandurah.var %>% 
+  normality.test(multivariate.only = FALSE)
+
+# ARCH
+
+Mandurah.var %>% 
+  arch.test(lags.multi = 10, multivariate.only = FALSE)
+
+# stability
+
+Mandurah.var %>% 
+  stability(type = "OLS-CUSUM") %>% 
+  plot()
+
+# Recursive residuals for delta_e move outside the CI, but probably nothing to worry too much about. Possibly include a dummy variable?
+Mandurah.var %>% 
+  stability(type = "Rec-CUSUM") %>% 
+  plot()
+
+Mandurah.svar <-  SVAR(Mandurah.var, Bmat = Bmat)
+
+Mandurah.svar$B/Mandurah.svar$Bse
+
+RegionsVar$Mandurah$VAR <- Mandurah.var
+
+RegionsVar$Mandurah$svar <- Mandurah.svar
+
+RegionsVar$Mandurah$`svar irf`$data <- Mandurah.svar %>% irf(n.ahead = 20)
+
+
 
 #--------------------------------------------------------------------------------------------
 # 5. IRFs for charts 
