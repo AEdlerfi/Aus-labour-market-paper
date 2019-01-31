@@ -700,8 +700,24 @@ for(i in seq_along(unique(Var.data$reg1))){
 # 6. Deep dive into selected regions 
 #--------------------------------------------------------------------------------------------
 
-regions <- c("Adelaide","Perth" ,"Mandurah","West and North West" )
+regions <- c("Adelaide","Townsville" ,"Mandurah","West and North West" )
 RegionsVar <- Varlist[regions] 
+
+#--------------------------------------------------------------------------------------------
+# 5. Table for appendix 
+#--------------------------------------------------------------------------------------------
+
+URDiags <- ur_test_delta_e %>%
+  mutate(Variable = "delta e") %>% 
+  bind_rows(ur_test_log_e %>% 
+              mutate(Variable = "log e")) %>% 
+  bind_rows(ur_test_log_p %>% 
+              mutate(Variable = "log p")) %>% 
+  filter(reg1 %in% regions) %>% 
+  rename(Region = reg1) %>% 
+  dplyr::select(Region, Variable, test, `test stat`, `critical value 5%`)
+
+
 
 ## Adelaide
 
@@ -774,19 +790,79 @@ RegionsVar$Adelaide$svar <- Adelaide.svar
 
 RegionsVar$Adelaide$`svar irf`$data <- Adelaide.svar %>% irf(n.ahead = 20)
 
-#--------------------------------------------------------------------------------------------
-# 5. Table for appendix 
-#--------------------------------------------------------------------------------------------
+## Townsville
 
-URDiags <- ur_test_delta_e %>%
-  mutate(Variable = "delta e") %>% 
-  bind_rows(ur_test_log_e %>% 
-              mutate(Variable = "log e")) %>% 
-  bind_rows(ur_test_log_p %>% 
-              mutate(Variable = "log p")) %>% 
-    filter(reg1 %in% regions) %>% 
-  rename(Region = reg1) %>% 
-  dplyr::select(Region, Variable, test, `test stat`, `critical value 5%`)
+# Filter data from VARdata
+
+Townsville.data <- Var.data %>% 
+  filter(reg1 == "Townsville")
+
+Townsville.data %>% 
+  dplyr::select(Date, log_p) %>%  
+  ggplot(aes(Date, log_p)) + 
+  geom_line()
+
+# Remove SB in log_p
+
+Townsville.data$log_p_dm <- tsoutliers::tso(ts(Townsville.data$log_p, f = 4))$yadj
+
+
+Townsville.data %>% 
+  ungroup() %>% 
+  dplyr::select( -reg1,-log_e,-log_p) %>%
+  gather(Var, Val, -Date) %>% 
+  ggplot(aes(Date)) + 
+  geom_line(aes(y = Val,colour = Var))
+
+# Estiamte var
+
+Townsville.var <- VAR(Townsville.data[,c("delta_e","log_e","log_p_dm")], lag.max = 8, ic = "AIC", type ="const" )
+
+Townsville.var <- VAR(Townsville.data[,c("delta_e","log_e","log_p_dm")], p =4, type ="const" )
+
+
+# AIC favours 2 lags, dynamic responses don't change dramatically when including more.
+
+# AC test, BG for small number of lags PT for large
+
+Townsville.var %>% 
+  serial.test(lags.pt = 24, type = "PT.adjusted")
+
+Townsville.var %>% 
+  serial.test(lags.bg = 10, type = "ES")
+
+# Normality:
+# Univariate residuals are fine
+# Mulitvariate residuals are not normal, however small sample the test is oversized (Killian and Lutkepohl 2017) there are small sample corrections but are not implemented in the VARS package
+
+Townsville.var %>% 
+  normality.test(multivariate.only = FALSE)
+
+# ARCH
+
+Townsville.var %>% 
+  arch.test(lags.multi = 10, multivariate.only = FALSE)
+
+# stability
+
+Townsville.var %>% 
+  stability(type = "OLS-CUSUM") %>% 
+  plot()
+
+# Recursive residuals for delta_e move outside the CI, but probably nothing to worry too much about. Possibly include a dummy variable?
+Townsville.var %>% 
+  stability(type = "Rec-CUSUM") %>% 
+  plot()
+
+Townsville.svar <-  SVAR(Townsville.var, Bmat = Bmat)
+
+Townsville.svar$B/Townsville.svar$Bse
+
+RegionsVar$Townsville$VAR <- Townsville.var
+
+RegionsVar$Townsville$svar <- Townsville.svar
+
+RegionsVar$Townsville$`svar irf`$data <- Townsville.svar %>% irf(n.ahead = 20)
 
 
 
