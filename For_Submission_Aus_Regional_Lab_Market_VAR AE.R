@@ -945,6 +945,83 @@ RegionsVar$Mandurah$svar <- Mandurah.svar
 
 RegionsVar$Mandurah$`svar irf`$data <- Mandurah.svar %>% irf(n.ahead = 20)
 
+## West and  North West
+
+# Filter data from VARdata
+
+WNW.data <- Var.data %>% 
+  filter(reg1 == "West and North West")
+
+WNW.data %>% 
+  dplyr::select(Date, delta_e) %>%  
+  ggplot(aes(Date, delta_e)) + 
+  geom_line()
+
+# Remove trend in log_e
+
+WNW.data$log_e_adj <- residuals(lm(WNW.data$log_e~c(1:length(WNW.data$log_e) ) ) )
+
+WNW.data$log_p_dm <- residuals(lm(WNW.data$log_p~1))
+
+WNW.data$delta_e_adj <- tsoutliers::tso(ts(WNW.data$delta_e, f =4))$yadj
+
+
+WNW.data %>% 
+  ungroup() %>% 
+  dplyr::select( -reg1) %>%
+  gather(Var, Val, -Date) %>% 
+  ggplot(aes(Date)) + 
+  geom_line(aes(y = Val,colour = Var))
+
+# Estiamte var
+
+WNW.var <- VAR(WNW.data[,c("delta_e_adj","log_e_adj","log_p_dm")], lag.max = 8, ic = "AIC", type ="none" )
+
+WNW.var <- VAR(WNW.data[,c("delta_e_adj","log_e_adj","log_p_dm")], p =4, type ="none")
+
+
+# AIC favours 5 lags, dynamic responses don't change dramatically when including more.
+
+# AC test, BG for small number of lags PT for large
+
+WNW.var %>% 
+  serial.test(lags.pt = 12, type = "PT.adjusted")
+
+WNW.var %>% 
+  serial.test(lags.bg = 8, type = "ES")
+
+# Normality:
+# Univariate - log_e could be an issue - likely an outlier
+# Mulitvariate residuals are not normal, however small sample the test is oversized (Killian and Lutkepohl 2017) there are small sample corrections but are not implemented in the VARS package
+
+WNW.var %>% 
+  normality.test(multivariate.only = FALSE)
+
+# ARCH
+
+WNW.var %>% 
+  arch.test(lags.multi = 10, multivariate.only = FALSE)
+
+# stability
+
+WNW.var %>% 
+  stability(type = "OLS-CUSUM") %>% 
+  plot()
+
+# Recursive residuals for delta_e move outside the CI, but probably nothing to worry too much about. Possibly include a dummy variable?
+WNW.var %>% 
+  stability(type = "Rec-CUSUM") %>% 
+  plot()
+
+WNW.svar <-  SVAR(WNW.var, Bmat = Bmat)
+
+WNW.svar$B/WNW.svar$Bse
+
+RegionsVar$`West and North West`$VAR <- WNW.var
+
+RegionsVar$`West and North West`$svar <- WNW.svar
+
+RegionsVar$`West and North West`$`svar irf`$data <- WNW.svar %>% irf(n.ahead = 20)
 
 
 #--------------------------------------------------------------------------------------------
