@@ -340,8 +340,8 @@ delta_e_ur <- lapply(delta_e %>%
                          list(
                            
                            ADF =x %>% 
-                           ts(start = c(1999,1), f =4) %>% 
-                           ur.df(type = "drift", selectlags = "AIC"),
+                             ts(start = c(1999,1), f =4) %>% 
+                             ur.df(type = "drift", selectlags = "AIC"),
                            
                            DFGLS = x %>% 
                              ts(start = c(1999,1), f =4) %>% 
@@ -350,13 +350,13 @@ delta_e_ur <- lapply(delta_e %>%
                            KPSS = x %>% 
                              ts(start = c(1999,1), f =4) %>% 
                              ur.kpss(type ="mu",use.lag = 4)
-                           )
-     
-    
-  
-  
-  
-})
+                         )
+                         
+                         
+                         
+                         
+                         
+                       })
 
 
 ur_test_delta_e <- delta_e_ur %>% 
@@ -379,9 +379,9 @@ ur_test_delta_e <- delta_e_ur %>%
       
     } ) %>% 
       data.frame()
-      
-      
-    }) %>%
+    
+    
+  }) %>%
   do.call("rbind",.) %>% 
   data.frame() %>% 
   mutate(reg1 = row.names(.)) %>% 
@@ -395,7 +395,7 @@ ur_test_delta_e <- delta_e_ur %>%
 
 delta_e_URregions <- ur_test_delta_e %>% 
   filter(reg1 %in% c("Adelaide","Townsville" ,"Mandurah","West and North West" ))
-  
+
 # Chart 4.b log_e 
 
 LabData %>% 
@@ -442,30 +442,30 @@ log_e <-
 
 
 log_e_ur <- lapply(log_e %>% 
-                       dplyr::select(-`quarter1`) %>% 
-                       spread(reg1,log_e) %>% 
-                       dplyr::select(-Date), function(x){
+                     dplyr::select(-`quarter1`) %>% 
+                     spread(reg1,log_e) %>% 
+                     dplyr::select(-Date), function(x){
+                       
+                       list(
                          
-                         list(
-                           
-                           ADF =x %>% 
-                             ts(start = c(1999,1), f =4) %>% 
-                             ur.df(type = "drift", selectlags = "AIC"),
-                           
-                           DFGLS = x %>% 
-                             ts(start = c(1999,1), f =4) %>% 
-                             ur.ers(type ="DF-GLS",model = "const",lag.max = 4),
-                           
-                           KPSS = x %>% 
-                             ts(start = c(1999,1), f =4) %>% 
-                             ur.kpss(type ="mu",use.lag = 4)
-                         )
+                         ADF =x %>% 
+                           ts(start = c(1999,1), f =4) %>% 
+                           ur.df(type = "drift", selectlags = "AIC"),
                          
+                         DFGLS = x %>% 
+                           ts(start = c(1999,1), f =4) %>% 
+                           ur.ers(type ="DF-GLS",model = "const",lag.max = 4),
                          
-                         
-                         
-                         
-                       })
+                         KPSS = x %>% 
+                           ts(start = c(1999,1), f =4) %>% 
+                           ur.kpss(type ="mu",use.lag = 4)
+                       )
+                       
+                       
+                       
+                       
+                       
+                     })
 
 
 ur_test_log_e <- log_e_ur %>% 
@@ -555,30 +555,30 @@ log_p <-  LabData %>%
   filter(Date != "1998-12-01")
 
 log_p_ur <- lapply(log_p %>% 
-                       dplyr::select(-`quarter1`) %>% 
-                       spread(reg1,log_p) %>% 
-                       dplyr::select(-Date), function(x){
+                     dplyr::select(-`quarter1`) %>% 
+                     spread(reg1,log_p) %>% 
+                     dplyr::select(-Date), function(x){
+                       
+                       list(
                          
-                         list(
-                           
-                           ADF =x %>% 
-                             ts(start = c(1999,1), f =4) %>% 
-                             ur.df(type = "drift", selectlags = "AIC"),
-                           
-                           DFGLS = x %>% 
-                             ts(start = c(1999,1), f =4) %>% 
-                             ur.ers(type ="DF-GLS",model = "const",lag.max = 4),
-                           
-                           KPSS = x %>% 
-                             ts(start = c(1999,1), f =4) %>% 
-                             ur.kpss(type ="mu", use.lag = 4)
-                         )
+                         ADF =x %>% 
+                           ts(start = c(1999,1), f =4) %>% 
+                           ur.df(type = "drift", selectlags = "AIC"),
                          
+                         DFGLS = x %>% 
+                           ts(start = c(1999,1), f =4) %>% 
+                           ur.ers(type ="DF-GLS",model = "const",lag.max = 4),
                          
-                         
-                         
-                         
-                       })
+                         KPSS = x %>% 
+                           ts(start = c(1999,1), f =4) %>% 
+                           ur.kpss(type ="mu", use.lag = 4)
+                       )
+                       
+                       
+                       
+                       
+                       
+                     })
 
 
 ur_test_log_p <- log_p_ur %>% 
@@ -664,8 +664,8 @@ for(i in seq_along(unique(Var.data$reg1))){
     ts(f =4)
   
   Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] <- VAR(dat,
-                                                          type = "const", lag.max = 8, ic = "AIC"
-                                                          )
+                                                             type = "const", lag.max = 8, ic = "AIC"
+  )
   
   Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$summary <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% summary()  
   
@@ -676,15 +676,15 @@ for(i in seq_along(unique(Var.data$reg1))){
   Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$roots <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% roots(modulus = TRUE)
   
   
-   if(max(Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]][["summary and test"]][["roots"]]$roots) >= 1){
+  if(max(Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]][["summary and test"]][["roots"]]$roots) >= 1){
     
-     Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$DynamicStab <-  "Not stable - check"
+    Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$DynamicStab <-  "Not stable - check"
     
-   }else{
+  }else{
     
-     Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$DynamicStab <-  "VAR is stable"
-     
-     
+    Varlist[[paste(unique(Var.data$reg1)[i])]][["summary and test"]]$DynamicStab <-  "VAR is stable"
+    
+    
   }
   
   Varlist[[paste(unique(Var.data$reg1)[i])]][["irf chol"]]$data <- Varlist[[paste(unique(Var.data$reg1)[i])]][["VAR"]] %>% irf(n.ahead = 20)
@@ -734,17 +734,25 @@ Adelaide.data %>%
 # Removing mean from adelaide lop_p
 
 Adelaide.data$log_p_dm <- residuals(lm(Adelaide.data$log_p~1))
+Adelaide.data$log_e_dm <- residuals(lm(Adelaide.data$log_e~1))
 
-Adelaide.data %>% 
+
+Adelaideplot <- Adelaide.data %>% 
   ungroup() %>% 
-  dplyr::select(-log_p, -reg1) %>%
-  gather(Var, Val, -Date) %>% 
+  dplyr::select(-reg1,-log_p_dm, -log_e_dm) %>%
+  gather(Variable, Val, -Date) %>% 
   ggplot(aes(Date)) + 
-  geom_line(aes(y = Val,colour = Var))
+  geom_line(aes(y = Val,colour = Variable))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Adelaide")+
+  theme_bw()+
+  theme(legend.position = "none")
+
 
 # Estiamte var
 
-Adelaide.var <- VAR(Adelaide.data[,c("delta_e","log_e","log_p_dm")],lag.max = 8,ic = "AIC",
+Adelaide.var <- VAR(Adelaide.data[,c("delta_e","log_e_dm","log_p_dm")],lag.max = 8,ic = "AIC",
                     type = "none")
 
 # AIC favours 2 lags, dynamic responses don't change dramatically when including more.
@@ -807,12 +815,17 @@ Townsville.data %>%
 Townsville.data$log_p_dm <- tsoutliers::tso(ts(Townsville.data$log_p, f = 4))$yadj
 
 
-Townsville.data %>% 
+Townsplot <- Townsville.data %>% 
   ungroup() %>% 
-  dplyr::select( -reg1,-log_e,-log_p) %>%
-  gather(Var, Val, -Date) %>% 
+  dplyr::select( -reg1,-log_p_dm) %>%
+  gather(Variable, Val, -Date) %>% 
   ggplot(aes(Date)) + 
-  geom_line(aes(y = Val,colour = Var))
+  geom_line(aes(y = Val,colour = Variable))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Townsville")+
+  theme_bw()+
+  theme(legend.position = "none")
 
 # Estiamte var
 
@@ -888,12 +901,19 @@ Mandurah.data$log_e_adj <- tsoutliers::tso(ts(Mandurah.data$log_e, f = 4))$yadj
 Mandurah.data$log_p_dm <- residuals(lm(Mandurah.data$log_p~1))
 
 
-Mandurah.data %>% 
+Manplot <- Mandurah.data %>% 
   ungroup() %>% 
-  dplyr::select( -reg1) %>%
-  gather(Var, Val, -Date) %>% 
+  dplyr::select( -reg1,-log_e_adj, -log_p_dm, -delta_e_adj) %>%
+  gather(Variable, Val, -Date) %>% 
   ggplot(aes(Date)) + 
-  geom_line(aes(y = Val,colour = Var))
+  geom_line(aes(y = Val,colour = Variable))+
+  xlab("")+
+  ylab("")+
+  ggtitle("Mandurah")+
+  theme_bw()+
+  theme(legend.position = "none")
+
+
 
 # Estiamte var
 
@@ -966,12 +986,18 @@ WNW.data$log_p_dm <- residuals(lm(WNW.data$log_p~1))
 WNW.data$delta_e_adj <- tsoutliers::tso(ts(WNW.data$delta_e, f =4))$yadj
 
 
-WNW.data %>% 
+WNW.plot <- WNW.data %>% 
   ungroup() %>% 
-  dplyr::select( -reg1) %>%
-  gather(Var, Val, -Date) %>% 
+  dplyr::select( -reg1,-log_e_adj,-delta_e_adj,-log_p_dm) %>%
+  gather(Variable, Val, -Date) %>% 
   ggplot(aes(Date)) + 
-  geom_line(aes(y = Val,colour = Var))
+  geom_line(aes(y = Val,colour = Variable))+
+  xlab("")+
+  ylab("")+
+  ggtitle("West North West")+
+  theme_bw()+
+  theme(legend.position = "none")
+
 
 # Estiamte var
 
@@ -1023,6 +1049,11 @@ RegionsVar$`West and North West`$svar <- WNW.svar
 
 RegionsVar$`West and North West`$`svar irf`$data <- WNW.svar %>% irf(n.ahead = 20)
 
+#--------------------------------------------------------------------------------------------
+# 5. Facet chart of raw data
+#--------------------------------------------------------------------------------------------
+
+gridExtra::grid.arrange(Adelaideplot,Townsplot,Manplot,WNW.plot)
 
 #--------------------------------------------------------------------------------------------
 # 5. IRFs for charts 
@@ -1032,20 +1063,20 @@ RegionsVar$`West and North West`$`svar irf`$data <- WNW.svar %>% irf(n.ahead = 2
 growby <- function(x, y, b = TRUE){
   
   for(i in seq(1:21)){  
-  
-  if(b == TRUE){
     
-        
+    if(b == TRUE){
+      
+      
       x[i+1] <- x[i]*(1.02)
       
     }else{
       
       x[i+1] <- x[i]*(1.02+y[i])
       
-      }
     }
-  return(x)
   }
+  return(x)
+}
 
 index.fun <- function(y){
   
@@ -1097,7 +1128,7 @@ chartdata %>%
               mutate(Var = gsub(" H","",.$Var)) %>% 
               mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>% 
               rename(Plus95 = Value )
-                        ) %>% 
+  ) %>% 
   left_join(chartdata %>% 
               bind_rows() %>%
               mutate(h = 0:21) %>% 
@@ -1114,9 +1145,9 @@ chartdata %>%
   geom_line(aes(y = Value), colour = "red")+
   geom_ribbon(aes(ymin = Less95, ymax = Plus95, group = Var), alpha = 0.2)+
   theme_classic()
-  
-  
-  
-           
+
+
+
+
 
 ############ WE DID IT!!!!!!!!!!!!!!!!! ###########################
