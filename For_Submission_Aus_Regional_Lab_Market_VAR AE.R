@@ -1090,28 +1090,40 @@ index.fun <- function(y){
   return(x)
 }
 
+
+(RegionsVar$Mandurah$`svar irf`$data$irf$delta_e_adj[,1]*shockval) %>% plot()
+
 chartdata <- list()
 for(i in regions){
   
-  chartdata[[paste("Emp",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
+  sigmas <- RegionsVar[[i]]$`svar irf`$data$irf[[1]][1,1]
   
-  chartdata[[paste("Emp H",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
+  chartdata[[paste("Emp",i)]] <- index.fun(y =(growby(x = rep(100,21), y = 0.01*RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,1]*(-1/sigmas) , b=FALSE)/growby(x = rep(100,21), b=TRUE)))-100
   
-  chartdata[[paste("Emp L",i)]] <- index.fun(y =(growby(x = rep(100,21), y = -1*RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,1] , b=FALSE)/growby(x = rep(100,21), b=TRUE)))
+  chartdata[[paste("Emp H",i)]] <- index.fun(y =(growby(x = rep(100,21), y = 0.01*RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,1]*(-1/sigmas) , b=FALSE)/growby(x = rep(100,21), b=TRUE)))-100
   
-  
-  chartdata[[paste("Ur",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,2]))
-  
-  chartdata[[paste("Ur H",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,2]))
-  
-  chartdata[[paste("Ur L",i)]] <-  c(0,100*(0+RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,2]))
+  chartdata[[paste("Emp L",i)]] <- index.fun(y =(growby(x = rep(100,21), y = 0.01*RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,1]*(-1/sigmas) , b=FALSE)/growby(x = rep(100,21), b=TRUE)))-100
   
   
-  chartdata[[paste("Part",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,3]))
+  #chartdata[[paste("Emp",i)]] <- c(0,(RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,1]*(-1/sigmas)))
   
-  chartdata[[paste("Part H",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,3]))
+  #chartdata[[paste("Emp H",i)]] <-  c(0,(RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,1]*(-1/sigmas)))
   
-  chartdata[[paste("Part L",i)]] <- c(0,100*(0-RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,3]))
+  #chartdata[[paste("Emp L",i)]] <- c(0,(RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,1]*(-1/sigmas)))
+  
+  
+  chartdata[[paste("Ur",i)]] <-  c(0,(0-RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,2])*(-1/sigmas))
+  
+  chartdata[[paste("Ur H",i)]] <-  c(0,(0-RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,2])*(-1/sigmas))
+  
+  chartdata[[paste("Ur L",i)]] <-  c(0,0-(RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,2])*(-1/sigmas))
+  
+  
+  chartdata[[paste("Part",i)]] <- c(0,(RegionsVar[[i]]$`svar irf`$data$irf$delta_e[,3])*(-1/sigmas))
+  
+  chartdata[[paste("Part H",i)]] <- c(0,(RegionsVar[[i]]$`svar irf`$data$Upper$delta_e[,3])*(-1/sigmas))
+  
+  chartdata[[paste("Part L",i)]] <- c(0,(RegionsVar[[i]]$`svar irf`$data$Lower$delta_e[,3])*(-1/sigmas))
   
 }
 
@@ -1119,26 +1131,26 @@ chartdata %>%
   bind_rows() %>%
   mutate(h = 0:21) %>% 
   gather(Var, Value, -h) %>% 
-  filter(!grepl("Emp H|Emp L|Ur H|Ur L|Part H|Part L",.$Var)) %>% 
-  left_join(chartdata %>% 
+  filter(!grepl("Emp H|Emp L|Ur H|Ur L|Part H|Part L",.$Var)) %>%
+  left_join(chartdata %>%
               bind_rows() %>%
-              mutate(h = 0:21) %>% 
-              gather(Var, Value, -h) %>% 
+              mutate(h = 0:21) %>%
+              gather(Var, Value, -h) %>%
               filter(grepl("Emp H|Ur H|Part H",.$Var)) %>%
-              mutate(Var = gsub(" H","",.$Var)) %>% 
-              mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>% 
+              mutate(Var = gsub(" H","",.$Var)) %>%
+              mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>%
               rename(Plus95 = Value )
-  ) %>% 
-  left_join(chartdata %>% 
+  ) %>%
+  left_join(chartdata %>%
               bind_rows() %>%
-              mutate(h = 0:21) %>% 
-              gather(Var, Value, -h) %>% 
+              mutate(h = 0:21) %>%
+              gather(Var, Value, -h) %>%
               filter(grepl("Emp L|Ur L|Part L",.$Var)) %>%
-              mutate(Var = gsub(" L","",.$Var)) %>% 
+              mutate(Var = gsub(" L","",.$Var)) %>%
               mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>%
               rename(Less95 = Value)
-            
-  ) %>% 
+
+  ) %>%
   
   ggplot(aes(x = h))+
   facet_wrap(~Var, scales = "free")+
@@ -1146,8 +1158,41 @@ chartdata %>%
   geom_ribbon(aes(ymin = Less95, ymax = Plus95, group = Var), alpha = 0.2)+
   theme_classic()
 
+chartlist <- list()
+for(i in regions){
 
+chartlist[[i]] <- chartdata %>% 
+  bind_rows() %>%
+  mutate(h = 0:21) %>% 
+  gather(Var, Value, -h) %>% 
+  filter(!grepl("Emp H|Emp L|Ur H|Ur L|Part H|Part L",.$Var)) %>%
+  left_join(chartdata %>%
+              bind_rows() %>%
+              mutate(h = 0:21) %>%
+              gather(Var, Value, -h) %>%
+              filter(grepl("Emp H|Ur H|Part H",.$Var)) %>%
+              mutate(Var = gsub(" H","",.$Var)) %>%
+              mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>%
+              rename(Plus95 = Value )
+  ) %>%
+  left_join(chartdata %>%
+              bind_rows() %>%
+              mutate(h = 0:21) %>%
+              gather(Var, Value, -h) %>%
+              filter(grepl("Emp L|Ur L|Part L",.$Var)) %>%
+              mutate(Var = gsub(" L","",.$Var)) %>%
+              mutate(Value = ifelse(grepl("Emp ",.$Var), NA, Value)) %>%
+              rename(Less95 = Value)
+            
+  ) %>% 
+  filter(grepl(paste0(i),.$Var)) %>% 
+  ggplot(aes(x = h)) +
+  geom_line(aes(y= Value, colour = Var))+
+  geom_ribbon(aes(ymin = Less95, ymax = Plus95, group = Var), alpha = 0.2)+
+  theme_bw()
 
+}
 
+gridExtra::grid.arrange(chartlist[[1]],chartlist[[2]],chartlist[[3]],chartlist[[4]])
 
 ############ WE DID IT!!!!!!!!!!!!!!!!! ###########################
