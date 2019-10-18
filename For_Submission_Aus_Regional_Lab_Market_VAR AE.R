@@ -1229,11 +1229,25 @@ gridExtra::grid.arrange(chartlist[[1]],chartlist[[2]],chartlist[[3]],chartlist[[
 # Extra chart for total employment growth
 LabData %>% 
   filter(var1 == "Employed Total ('000)") %>%
-  group_by(var1,date1) %>% 
-  summarise(Val =sum(val1)) %>%
-  mutate(grth = Val/lag(Val,4)*100-100) %>%
+  filter(reg1 == "Australia") %>% 
+  mutate(grth = val1/lag(val1,12)*100-100) %>%
+  mutate(Mean1 = ifelse(date1<="2008-06-01",
+         mean(grth[which(date1<="2008-06-01")],na.rm = T),
+         NA)) %>% 
+  mutate(Mean2 = ifelse(date1>"2008-06-01",
+         mean(grth[which(date1>"2008-06-01")],na.rm = T),
+         NA)) %>% 
   ggplot(aes(date1,grth))+
-  geom_line()
+  geom_line()+
+  geom_line(aes(date1,Mean1), col = "red")+
+  geom_line(aes(date1,Mean2), col = "red")+
+  ggtitle("Through the year growth in Australian employment", subtitle = "%")+
+  annotate("text", x=ymd("2002-12-01") , y= 3.5, label = "1998:2008 average", colour = "red")+
+  annotate("text", x=ymd("2013-04-01") , y= 2.2, label = "2009:2018 average", colour = "red")+
+  xlab("")+
+  ylab("")+
+  theme_bw()
+  
 
 
 ############ WE DID IT!!!!!!!!!!!!!!!!! ###########################
